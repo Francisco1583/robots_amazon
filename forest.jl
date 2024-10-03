@@ -1,33 +1,43 @@
 using Agents, Random, Distributions
-
+using Random: MersenneTwister
+#especifica los estados que va a tener el arbol
 @enum TreeStatus green burning burnt
 
+#crea el agente y le asigno alguno de los estados
 @agent struct TreeAgent(GridAgent{2})
     status::TreeStatus = green
 end
-
+#funcion bastate intuitiva por lo mismo no la explico
 function forest_step(tree::TreeAgent, model)
+	#aleatorio = abmrng(model)
     if tree.status == burning
         for neighbor in nearby_agents(tree, model)
-            if neighbor.status == green
+		if neighbor.status == green && rand(Uniform(0,1)) < model.probability_of_spread/100
                 neighbor.status = burning
             end
         end
         tree.status = burnt
     end
 end
-
-function forest_fire(; density = 0.45, griddims = (5, 5))
+#density es para definir la cantidad de arboles que hay en el bosque
+#griddims es el tamaño del bosque por así decirlo
+function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50)
     space = GridSpaceSingle(griddims; periodic = false, metric = :manhattan)
-    forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly())
+    #forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),rng = MersenneTwister(6998),properties = Dict(:probability_of_spread => probability_of_spread))
+    #forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly())
+    forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict(:probability_of_spread => probability_of_spread))
 
     for pos in positions(forest)
         if rand(Uniform(0,1)) < density
-            tree = add_agent!(I, forest)
+            tree = add_agent!(pos, forest)
+	    #indica que si estamos en la primer columna cambie el estado del arbol a quemado
+	    #en pos cuando ponemos 1 nos referimos a columna
+	    #en pos cuando ponemos 2 nos referimos a renglon
             if pos[1] == 1
                 tree.status = burning
             end
         end
     end
+    #forest[:probability_of_spread] = probability_of_spread
     return forest
 end
