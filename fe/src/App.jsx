@@ -16,6 +16,9 @@ function App() {
   let [simSpeed,setSimSpeed] = useState(2);
   let [trees, setTrees] = useState([]);
   let [probability,setProbability] = useState(20)
+  let [density,setDensity] = useState(0.5)
+  let [south_wind,setSouth] = useState(20)
+  let [west_wind,setWest] = useState(20)
 
   const burntTrees = useRef(null);
   const running = useRef(null);
@@ -24,7 +27,7 @@ function App() {
     fetch("http://localhost:8000/simulations", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability  })
+      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind})
     }).then(resp => resp.json())
     .then(data => {
       setLocation(data["Location"]);
@@ -74,7 +77,12 @@ function App() {
     value={simSpeed} onChange={setSimSpeed} />
 <SliderField label="probability_of_spread" min={0} max={100} step={1}
     value={probability} onChange={setProbability} />
-
+<SliderField label="density" min={0} max={1} step={0.1}
+    value={density} onChange={setDensity} />
+<SliderField label="south wind" min={-50} max={50} step={1}
+    value={south_wind} onChange={setSouth} />
+<SliderField label="west wind" min={-50} max={50} step={1}
+    value={west_wind} onChange={setWest} />
 
 
       <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"white"}}>
