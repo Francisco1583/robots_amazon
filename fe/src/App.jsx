@@ -1,4 +1,4 @@
-import { Button, ButtonGroup,SliderField } from '@aws-amplify/ui-react';
+import { Button, ButtonGroup,SliderField, CheckboxField } from '@aws-amplify/ui-react';
 import { useRef, useState } from 'react'
 import '@aws-amplify/ui-react/styles.css';
 
@@ -19,7 +19,8 @@ function App() {
   let [density,setDensity] = useState(0.5)
   let [south_wind,setSouth] = useState(20)
   let [west_wind,setWest] = useState(20)
-
+   
+  const [checked, setChecked] = useState(false)
   const burntTrees = useRef(null);
   const running = useRef(null);
 
@@ -27,7 +28,7 @@ function App() {
     fetch("http://localhost:8000/simulations", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind})
+      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked})
     }).then(resp => resp.json())
     .then(data => {
       setLocation(data["Location"]);
@@ -83,6 +84,13 @@ function App() {
     value={south_wind} onChange={setSouth} />
 <SliderField label="west wind" min={-50} max={50} step={1}
     value={west_wind} onChange={setWest} />
+<CheckboxField
+      name="big_jumps"
+      value="yes"
+      checked={checked}
+      onChange={(e) => setChecked(e.target.checked)}
+      label="on/off big jumps"
+    />
 
 
       <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"white"}}>
