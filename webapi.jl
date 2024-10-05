@@ -14,8 +14,9 @@ route("/simulations", method = POST) do
     sw = payload["sw"]
     wew = payload["wew"]
     bigj = payload["bigj"]
+    jp = payload["jp"]
 
-    model = forest_fire(density = den, griddims=(x,y),probability_of_spread = probability, south_wind_speed = sw, west_wind_speed = wew, big_jumps = bigj)
+    model = forest_fire(density = den, griddims=(x,y),probability_of_spread = probability, south_wind_speed = sw, west_wind_speed = wew, big_jumps = bigj,big_probability = jp)
     id = string(uuid1())
     instances[id] = model
 

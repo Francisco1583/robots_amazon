@@ -19,6 +19,7 @@ function App() {
   let [density,setDensity] = useState(0.5)
   let [south_wind,setSouth] = useState(20)
   let [west_wind,setWest] = useState(20)
+  let [jump_prob,setJpb] = useState(100)
    
   const [checked, setChecked] = useState(false)
   const burntTrees = useRef(null);
@@ -28,7 +29,7 @@ function App() {
     fetch("http://localhost:8000/simulations", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked})
+      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked, jp:jump_prob})
     }).then(resp => resp.json())
     .then(data => {
       setLocation(data["Location"]);
@@ -91,6 +92,8 @@ function App() {
       onChange={(e) => setChecked(e.target.checked)}
       label="on/off big jumps"
     />
+<SliderField label="probability of jump" min={0} max={100} step={1}
+    value={jump_prob} onChange={setJpb} />
 
 
       <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"white"}}>

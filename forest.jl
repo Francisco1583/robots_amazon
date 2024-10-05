@@ -65,7 +65,7 @@ function forest_step(tree::TreeAgent, model)
 end
 #density es para definir la cantidad de arboles que hay en el bosque
 #griddims es el tamaño del bosque por así decirlo
-function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = false, big_probability = 0)
+function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = true, big_probability = 100)
     space = GridSpaceSingle(griddims; periodic = false, metric = :chebyshev)
     #forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),rng = MersenneTwister(6998),properties = Dict(:probability_of_spread => probability_of_spread))
     #forest = StandardABM(TreeAgent, space; agent_step! = forest_step, scheduler = Schedulers.Randomly())
