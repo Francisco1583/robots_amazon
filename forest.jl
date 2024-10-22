@@ -23,6 +23,7 @@ end
     reset::Integer = 0
     cajasLinea::Vector{Any} = []
     romper::Integer = 0
+    despliegue::Integer = 0
 end
 #funcion bastate intuitiva por lo mismo no la explico
 function forest_step(tree::BoxAgent, model)
@@ -56,6 +57,8 @@ function forest_step(robot::RobotAgent, model)
         c_y = robot.cajasLinea[1].pos[2]-1
         
         if ((r_x,r_y) == (c_x,c_y)) && robot.regreso == 0
+            #despliegue sirve para sacar al robot de su posicion inicial
+            robot.despliegue = 1
             robot.regreso = 1
             #print("caso2")
             matrix = model.matrix
@@ -71,10 +74,13 @@ function forest_step(robot::RobotAgent, model)
         elseif ((r_x,r_y) == (robot.x_carga,2)) && robot.regreso == 1
             print("tercer_if")
             deposito = collect(agents_in_position((robot.x_carga,1),model))
+            
             if !isempty(deposito)
                 print("entra a sumar")
                 deposito[1].num = deposito[1].num + 1
                 if deposito[1].num == 5
+                    #
+                    deposito[1].status = burning
                     robot.x_carga = robot.x_carga + 1
                 end
             else
@@ -90,15 +96,21 @@ function forest_step(robot::RobotAgent, model)
         move_along_route!(robot, model, pathfinder)
         r_x = robot.pos[1]
         r_y = robot.pos[2]
-        #corregir logica aquí
-        if ((r_x,r_y) == (robot.x_carga,2) || (r_x,r_y) == (4,2)) && robot.linea < 20
+        
+        if ((r_x,r_y) == (robot.x_carga,2) || ((r_x,r_y) == (4,2) && robot.despliegue == 0)) && robot.linea < 20
+        #despliegue sirve para sacar al robot de su posicion inicial
+        robot.despliegue = 1
         print("quinto_if")
             robot.linea = robot.linea + 1 
             deposito = collect(agents_in_position((robot.x_carga,1),model))
-            if !isempty(deposito)
+            #se agrega la condicional de regreso porque sino, cuando el robot este en la zona de carga y ya no haya más 
+            #cajas que llevar aún así sumará una
+            if !isempty(deposito) && robot.regreso == 1
                 print("entra a sumar")
                 deposito[1].num = deposito[1].num + 1
                 if deposito[1].num == 5
+                    #
+                    deposito[1].status = burning
                     robot.x_carga = robot.x_carga + 1
                 end
             else
@@ -186,12 +198,13 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
 
 		 #area de pruebas
 		 #add_agent!(BoxAgent, pos = (1, 4), model)
-		 #add_agent!(BoxAgent, pos = (2, 4), model)
+		 #add_agent!(BoxAgent, pos = (2, 3), model)
 		 #add_agent!(BoxAgent, pos = (3, 4), model)
+		 #add_agent!(BoxAgent, pos = (4, 3), model)
 		 #add_agent!(BoxAgent, pos = (4, 4), model)
 		 #add_agent!(BoxAgent, pos = (5, 4), model)
 		 #add_agent!(BoxAgent, pos = (6, 4), model)
-		 #add_agent!(BoxAgent, pos = (7, 4), model)
+		 #add_agent!(BoxAgent, pos = (7, 3), model)
 		 #add_agent!(BoxAgent, pos = (8, 4), model)
 
          #se crea el espacio por el que el path hará la ruta

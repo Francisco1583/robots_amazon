@@ -125,7 +125,7 @@ function App() {
             y={offset + 12*(tree["pos"][1] - 1)}
             width={15} href={
               tree["status"] === "green" ? "./megacaja20.svg" :
-              (tree["status"] === "burning" ? "./burningtree.svg" :
+              (tree["status"] === "burning" ? "./megaroja20.svg" :
                 "./burnttree.svg")
             }
           />
