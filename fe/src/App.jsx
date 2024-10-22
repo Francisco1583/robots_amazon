@@ -131,6 +131,16 @@ function App() {
           />
         )
       }
+      {
+        robots.map(tree =>
+          <image
+            key={tree["id"]}
+            x={offset + 12*(tree["pos"][0] - 1)}
+            y={offset + 12*(tree["pos"][1] - 1)}
+            width={15} href={"./robot1.png"}
+          />
+        )
+      }
       </svg>
 
     </>

@@ -6,27 +6,82 @@ using Random: MersenneTwister
 #crea el agente y le asigno alguno de los estados
 @agent struct BoxAgent(GridAgent{2})
     status::TreeStatus = green
+    num::Integer = 1
 end
 
 @agent struct RobotAgent(GridAgent{2})
+    deposit_carga::Integer = 0
     carga::Integer = 1
+    caja_id::Integer = 0
+    min_x::Integer = 1
+    max_x::Integer = 8
+    min_y::Integer = 3
+    max_y::Integer = 40
+    linea::Integer = 3
+    regreso::Integer = 0
+    x_carga::Integer = 1
+    reset::Integer = 0
+    cajasLinea::Vector{Any} = []
+    romper::Integer = 0
 end
 #funcion bastate intuitiva por lo mismo no la explico
-function forest_step(tree::TreeAgent, model)
+function forest_step(tree::BoxAgent, model)
 	pathfinder = model.path 
-	if tree.id == model.id 
-			move_along_route!(tree, model, pathfinder)
-	end
+	move_along_route!(tree, model, pathfinder)
+	#end
 				
 end
 
 function forest_step(robot::RobotAgent, model)
-
+    pathfinder = model.path 
+    if robot.reset == 0
+        robot.reset = 1
+        if isempty(robot.cajasLinea)
+            for i in robot.min_x:robot.max_x
+                agente = collect(agents_in_position((i,robot.linea),model))
+                if !isempty(agente)
+                    robot.cajasLinea = vcat(robot.cajasLinea,agente)
+                end
+            end
+        end
+        if !isempty(robot.cajasLinea)
+            plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder)
+        end
+    elseif !isempty(robot.cajasLinea)
+        r_x = robot.pos[1]
+        r_y = robot.pos[2]
+        c_x = robot.cajasLinea[1].pos[1]
+        c_y = robot.cajasLinea[1].pos[2]-1
+        
+        if ((r_x,r_y) == (c_x,c_y)) && robot.regreso == 0
+            robot.regreso = 1
+            print("caso2")
+            matrix = model.matrix
+            matrix[robot.cajasLinea[1].pos[1],robot.cajasLinea[1].pos[2]] = 1
+            model.matrix = matrix
+            maze = BitArray(map(x -> x > 0, matrix))
+            pathfinder = AStar(GridSpace((40,40); periodic = false, metric = :chebyshev); walkmap=maze, diagonal_movement=false)
+            model.path = pathfinder
+            popcaja = robot.cajasLinea[1]
+            popfirst!(robot.cajasLinea)
+            remove_agent!(popcaja, model)
+            plan_route!(robot, (4,2), pathfinder)
+        elseif ((r_x,r_y) == (4,2)) && robot.regreso == 1
+            robot.regreso = 0
+            robot.reset = 0
+        end
+        move_along_route!(robot, model, pathfinder)
+    else
+        move_along_route!(robot, model, pathfinder)
+        print("termina")
+    end
+	#pathfinder = model.path 
+	#move_along_route!(robot, model, pathfinder)
 end
 
 function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = true, big_probability = 100)
     space = GridSpace((40,40); periodic = false, metric = :chebyshev)
-    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(:probability_of_spread => probability_of_spread,:south_wind_speed => south_wind_speed,:west_wind_speed => west_wind_speed, :big_jumps => big_jumps, :big_probability => big_probability, :path => nothing, :id => nothing))
+    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(:probability_of_spread => probability_of_spread,:south_wind_speed => south_wind_speed,:west_wind_speed => west_wind_speed, :big_jumps => big_jumps, :big_probability => big_probability, :path => nothing, :matrix=> nothing))
 		matrix = [
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
@@ -69,56 +124,42 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;																
 						 ]
-    
-		 for i in 1:100
-            empty = collect(empty_positions(model))
-            pos = rand(empty)
-            x = pos[1]
-            y = pos[2]
-            while pos == (13,2) || pos == (20,2) || pos == (28,2) || pos == (36,2) || pos == (20,2) || pos == (4,2)
-                pos = rand(empty)
-                x = pos[1]
-                y = pos[2]
-            end
-            matrix[x,y] = 0
-            add_agent!(BoxAgent, pos = pos, model)
-		 end
+
+
+         #se crean las cajas en posiciones aleatorias (a excepcion del area de deposito y de robots)
+		 #for i in 1:100
+         #   empty = collect(empty_positions(model))
+         #   pos = rand(empty)
+         #   x = pos[1]
+         #   y = pos[2]
+         #   while y == 1 || y == 2
+         #       pos = rand(empty)
+         #       x = pos[1]
+         #       y = pos[2]
+         #   end
+         #   matrix[x,y] = 0
+         #   add_agent!(BoxAgent, pos = pos, model)
+		 #end
 		 
-         #add_agent!(TreeAgent, pos= (4, 1), forest)
-		 #add_agent!(TreeAgent, pos = (13,1), forest)
-		 #add_agent!(TreeAgent, pos = (20,1), forest)
-		 #add_agent!(TreeAgent, pos = (28,1), forest)
-		 #add_agent!(TreeAgent, pos = (36,1), forest)
-		 #add_agent!(TreeAgent, pos = (28,1), forest)
-		 
-		 #add_agent!(TreeAgent, pos= (4, 2), forest)
-		 #add_agent!(TreeAgent, pos = (13,2), forest)
-		 #add_agent!(TreeAgent, pos = (20,2), forest)
-		 #add_agent!(TreeAgent, pos = (28,2), forest)
-		 #add_agent!(TreeAgent, pos = (36,2), forest)
-		 #add_agent!(TreeAgent, pos = (28,2), forest)
-		 #add_agent!(TreeAgent, pos= (5, 2), forest)
-		 #add_agent!(TreeAgent, pos = (14,2), forest)
-		 #add_agent!(TreeAgent, pos = (21,2), forest)
-		 #add_agent!(TreeAgent, pos = (29,2), forest)
-		 #add_agent!(TreeAgent, pos = (37,2), forest)
-		 #add_agent!(TreeAgent, pos = (29,2), forest)
-		 #add_agent!(TreeAgent, pos= (3, 2), forest)
-		 #add_agent!(TreeAgent, pos = (12,2), forest)
-		 #add_agent!(TreeAgent, pos = (19,2), forest)
-		 #add_agent!(TreeAgent, pos = (27,2), forest)
-		 #add_agent!(TreeAgent, pos = (35,2), forest)
-		 #add_agent!(TreeAgent, pos = (27,2), forest)
-		 
-		 #add_agent!(pos = (4,2), forest)
-		 #matrix[4,2] = 0
-		 #add_agent!(pos = (4,4), forest)
-		 #matrix[4,4] = 0
-		 #maze = BitArray(map(x -> x > 0, matrix))
-		 #pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
-		 #a = add_agent!(pos=(4, 1), forest)
-		 #plan_route!(a, (4, 5), pathfinder)
-		 #forest.path = pathfinder
-		 #forest.id = a.id
+         #sea agrega a los robots
+		 add_agent!(RobotAgent, pos = (4, 2), model)
+		 #add_agent!(RobotAgent, pos = (13,2), model)
+		 #add_agent!(RobotAgent, pos = (20,2), model)
+		 #add_agent!(RobotAgent, pos = (28,2), model)
+		 #add_agent!(RobotAgent, pos = (36,2), model)
+		 #add_agent!(RobotAgent, pos = (28,2), model)
+
+		 #area de pruebas
+		 add_agent!(BoxAgent, pos = (1, 3), model)
+		 add_agent!(BoxAgent, pos = (3, 3), model)
+		 add_agent!(BoxAgent, pos = (8, 3), model)
+		 add_agent!(BoxAgent, pos = (5, 3), model)
+
+         #se crea el espacio por el que el path hará la ruta
+         maze = BitArray(map(x -> x > 0, matrix))
+		 pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
+		 model.path = pathfinder
+		 model.matrix = matrix
+		 #plan_route!(a, (4, 6), pathfinder)
     return model
 end
