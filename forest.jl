@@ -35,6 +35,7 @@ end
 function forest_step(robot::RobotAgent, model)
     pathfinder = model.path 
     if robot.reset == 0
+    print("primer_if")
         robot.reset = 1
         if isempty(robot.cajasLinea)
             for i in robot.min_x:robot.max_x
@@ -48,6 +49,7 @@ function forest_step(robot::RobotAgent, model)
             plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder)
         end
     elseif !isempty(robot.cajasLinea)
+        print("segundo_if")
         r_x = robot.pos[1]
         r_y = robot.pos[2]
         c_x = robot.cajasLinea[1].pos[1]
@@ -55,7 +57,7 @@ function forest_step(robot::RobotAgent, model)
         
         if ((r_x,r_y) == (c_x,c_y)) && robot.regreso == 0
             robot.regreso = 1
-            print("caso2")
+            #print("caso2")
             matrix = model.matrix
             matrix[robot.cajasLinea[1].pos[1],robot.cajasLinea[1].pos[2]] = 1
             model.matrix = matrix
@@ -65,15 +67,48 @@ function forest_step(robot::RobotAgent, model)
             popcaja = robot.cajasLinea[1]
             popfirst!(robot.cajasLinea)
             remove_agent!(popcaja, model)
-            plan_route!(robot, (4,2), pathfinder)
-        elseif ((r_x,r_y) == (4,2)) && robot.regreso == 1
+            plan_route!(robot, (robot.x_carga,2), pathfinder)
+        elseif ((r_x,r_y) == (robot.x_carga,2)) && robot.regreso == 1
+            print("tercer_if")
+            deposito = collect(agents_in_position((robot.x_carga,1),model))
+            if !isempty(deposito)
+                print("entra a sumar")
+                deposito[1].num = deposito[1].num + 1
+                if deposito[1].num == 5
+                    robot.x_carga = robot.x_carga + 1
+                end
+            else
+                print("agregar caja")
+                add_agent!(BoxAgent, pos = (robot.x_carga,1), model)
+            end
             robot.regreso = 0
             robot.reset = 0
         end
         move_along_route!(robot, model, pathfinder)
     else
+        print("cuarto_if")
         move_along_route!(robot, model, pathfinder)
-        print("termina")
+        r_x = robot.pos[1]
+        r_y = robot.pos[2]
+        #corregir logica aquí
+        if ((r_x,r_y) == (robot.x_carga,2) || (r_x,r_y) == (4,2)) && robot.linea < 20
+        print("quinto_if")
+            robot.linea = robot.linea + 1 
+            deposito = collect(agents_in_position((robot.x_carga,1),model))
+            if !isempty(deposito)
+                print("entra a sumar")
+                deposito[1].num = deposito[1].num + 1
+                if deposito[1].num == 5
+                    robot.x_carga = robot.x_carga + 1
+                end
+            else
+                print("agregar caja")
+                add_agent!(BoxAgent, pos = (robot.x_carga,1), model)
+            end
+            robot.regreso = 0
+            robot.reset = 0
+        end
+        #print("termina")
     end
 	#pathfinder = model.path 
 	#move_along_route!(robot, model, pathfinder)
@@ -127,19 +162,19 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
 
 
          #se crean las cajas en posiciones aleatorias (a excepcion del area de deposito y de robots)
-		 #for i in 1:100
-         #   empty = collect(empty_positions(model))
-         #   pos = rand(empty)
-         #   x = pos[1]
-         #   y = pos[2]
-         #   while y == 1 || y == 2
-         #       pos = rand(empty)
-         #       x = pos[1]
-         #       y = pos[2]
-         #   end
-         #   matrix[x,y] = 0
-         #   add_agent!(BoxAgent, pos = pos, model)
-		 #end
+		 for i in 1:100
+            empty = collect(empty_positions(model))
+            pos = rand(empty)
+            x = pos[1]
+            y = pos[2]
+            while (y == 1 || y == 2) || x > 8
+                pos = rand(empty)
+                x = pos[1]
+                y = pos[2]
+            end
+            matrix[x,y] = 0
+            add_agent!(BoxAgent, pos = pos, model)
+		 end
 		 
          #sea agrega a los robots
 		 add_agent!(RobotAgent, pos = (4, 2), model)
@@ -150,10 +185,14 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
 		 #add_agent!(RobotAgent, pos = (28,2), model)
 
 		 #area de pruebas
-		 add_agent!(BoxAgent, pos = (1, 3), model)
-		 add_agent!(BoxAgent, pos = (3, 3), model)
-		 add_agent!(BoxAgent, pos = (8, 3), model)
-		 add_agent!(BoxAgent, pos = (5, 3), model)
+		 #add_agent!(BoxAgent, pos = (1, 4), model)
+		 #add_agent!(BoxAgent, pos = (2, 4), model)
+		 #add_agent!(BoxAgent, pos = (3, 4), model)
+		 #add_agent!(BoxAgent, pos = (4, 4), model)
+		 #add_agent!(BoxAgent, pos = (5, 4), model)
+		 #add_agent!(BoxAgent, pos = (6, 4), model)
+		 #add_agent!(BoxAgent, pos = (7, 4), model)
+		 #add_agent!(BoxAgent, pos = (8, 4), model)
 
          #se crea el espacio por el que el path hará la ruta
          maze = BitArray(map(x -> x > 0, matrix))
