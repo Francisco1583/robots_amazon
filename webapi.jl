@@ -21,22 +21,34 @@ route("/simulations", method = POST) do
     instances[id] = model
 
     trees = []
+    robots = []
     for tree in allagents(model)
-        push!(trees, tree)
+        #push!(trees, tree)
+        if tree isa BoxAgent
+            push!(trees, tree)
+        else
+            push!(robots,tree)
+        end
     end
     
-    json(Dict(:msg => "Hola", "Location" => "/simulations/$id", "trees" => trees))
+    json(Dict(:msg => "Hola", "Location" => "/simulations/$id", "trees" => trees, "robots" => robots))
 end
 
 route("/simulations/:id") do
     model = instances[payload(:id)]
     run!(model, 1)
     trees = []
+    robots = []
     for tree in allagents(model)
-        push!(trees, tree)
+        #push!(trees, tree)
+        if tree isa BoxAgent
+            push!(trees, tree)
+        else
+            push!(robots,tree)
+        end
     end
     
-    json(Dict(:msg => "Adios", "trees" => trees))
+    json(Dict(:msg => "Adios", "trees" => trees, "robots" => robots))
 end
 
 Genie.config.run_as_server = true

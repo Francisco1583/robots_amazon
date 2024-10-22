@@ -12,9 +12,11 @@ Plotly.newPlot('myDiv', [{
 
 function App() {
   let [location, setLocation] = useState("");
-  let [gridSize, setGridSize] = useState(20);
+  let [gridSize, setGridSize] = useState(40);
   let [simSpeed,setSimSpeed] = useState(2);
   let [trees, setTrees] = useState([]);
+  //c
+  let [robots, setRobots] = useState([]);
   let [probability,setProbability] = useState(20)
   let [density,setDensity] = useState(0.5)
   let [south_wind,setSouth] = useState(20)
@@ -34,6 +36,8 @@ function App() {
     .then(data => {
       setLocation(data["Location"]);
       setTrees(data["trees"]);
+      //c
+      setRobots(data["robots"])
     });
   }
 
@@ -47,6 +51,7 @@ function App() {
       let burnt = data["trees"].filter(t => t.status == "burnt").length / data["trees"].length;
       burntTrees.current.push(burnt);
       setTrees(data["trees"]);
+      setRobots(data["robots"]);
     });
     }, 1000/simSpeed );
 };
@@ -62,7 +67,7 @@ function App() {
   };
 
   let burning = trees.filter(t => t.status == "burning").length;
-  if (burning == 0) handleStop();
+  //if (burning == 0) handleStop();
   let offset = (500 - gridSize * 12) / 2;
 
   return (
@@ -96,7 +101,22 @@ function App() {
     value={jump_prob} onChange={setJpb} />
 
 
-      <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"white"}}>
+      <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"black"}}>
+      <rect x={13} y={0} width={93} height={500} style={{fill: "green"}}></rect>
+      <rect x={13} y={0} width={93} height={35} style={{fill: "red"}}></rect>
+      <rect x={110} y={0} width={93} height={500} style={{fill: "green"}}></rect>
+      <rect x={110} y={0} width={93} height={35} style={{fill: "red"}}></rect>
+      <rect x={207} y={0} width={93} height={500} style={{fill: "green"}}></rect>
+      <rect x={207} y={0} width={93} height={35} style={{fill: "red"}}></rect>
+      <rect x={304} y={0} width={93} height={500} style={{fill: "green"}}></rect>
+      <rect x={304} y={0} width={93} height={35} style={{fill: "red"}}></rect>
+      <rect x={401} y={0} width={93} height={500} style={{fill: "green"}}></rect>
+      <rect x={401} y={0} width={93} height={35} style={{fill: "red"}}></rect>
+      <rect x={430} y={25} width={15} height={10} style={{fill: "pink"}}></rect>
+      <rect x={335} y={25} width={15} height={10} style={{fill: "pink"}}></rect>
+      <rect x={238} y={25} width={15} height={10} style={{fill: "pink"}}></rect>
+      <rect x={154} y={25} width={15} height={10} style={{fill: "pink"}}></rect>
+      <rect x={46} y={25} width={15} height={10} style={{fill: "pink"}}></rect>
       {
         trees.map(tree =>
           <image
@@ -104,7 +124,7 @@ function App() {
             x={offset + 12*(tree["pos"][0] - 1)}
             y={offset + 12*(tree["pos"][1] - 1)}
             width={15} href={
-              tree["status"] === "green" ? "./greentree.svg" :
+              tree["status"] === "green" ? "./megacaja20.svg" :
               (tree["status"] === "burning" ? "./burningtree.svg" :
                 "./burnttree.svg")
             }

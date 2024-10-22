@@ -54,7 +54,7 @@ export default function Home() {
           Stop
         </Button>
       </div>
-      <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"white"}}>
+      <svg width="400" height="400" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"black"}}>
       {
         trees.map(tree => 
           <image 
