@@ -15,10 +15,7 @@ end
     linea::Integer = 3
     regreso::Integer = 0
     x_carga::Integer = 1
-    #reset::Integer = 0
     cajasLinea::Vector{Any} = []
-    path::Vector{Any} = []
-    #despliegue::Integer = 0
     trabajando::Integer = 1
     who::Integer = 1
 end
@@ -28,13 +25,8 @@ function forest_step(tree::BoxAgent, model)
 end
 
 function forest_step(robot::RobotAgent, model)
-    #if robot.who == 1
-    #    pathfinder = model.path
-    #else
-    #    pathfinder = model.path1
-    #end
+
     pathfinder = model.paths[robot.who]
-    #pathfinder = model.path
     
     if !isempty(robot.cajasLinea)
         caja_x =robot.cajasLinea[1].pos[1]
@@ -47,11 +39,6 @@ function forest_step(robot::RobotAgent, model)
             model.matrix = matrix
             maze = BitArray(map(x -> x > 0, matrix))
             pathfinder = AStar(GridSpace((40,40); periodic = false, metric = :chebyshev); walkmap=maze, diagonal_movement=false)
-            #if robot.who == 1
-            #    model.path = pathfinder
-            #else
-            #    model.path1 = pathfinder
-            #end
             model.paths[robot.who] = pathfinder 
             #eliminamos la caja recojida de la lista y del modelo (50-52)
             popcaja = robot.cajasLinea[1]
@@ -66,7 +53,7 @@ function forest_step(robot::RobotAgent, model)
                 print("entra a sumar")
                 deposito[1].num = deposito[1].num + 1
                 if deposito[1].num == 5
-                    #
+                    
                     deposito[1].status = burning
                     robot.x_carga = robot.x_carga + 1
                 end
@@ -89,7 +76,7 @@ function forest_step(robot::RobotAgent, model)
                 print("entra a sumar")
                 deposito[1].num = deposito[1].num + 1
                 if deposito[1].num == 5
-                    #
+                    
                     deposito[1].status = burning
                     robot.x_carga = robot.x_carga + 1
                 end
@@ -150,14 +137,13 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;																
 						 ]
 
-
          #se crean las cajas en posiciones aleatorias (a excepcion del area de deposito y de robots)
 		 for i in 1:100
             empty = collect(empty_positions(model))
             pos = rand(empty)
             x = pos[1]
             y = pos[2]
-            while (y == 1 || y == 2) #|| x > 8
+            while (y == 1 || y == 2) 
                 pos = rand(empty)
                 x = pos[1]
                 y = pos[2]
@@ -166,87 +152,25 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             add_agent!(BoxAgent, pos = pos, model)
 		 end
 
-
-		 #add_agent!(BoxAgent, pos = (1, 4), model)
-		 #matrix[1, 4] = 0
-		 #add_agent!(BoxAgent, pos = (2, 3), model)
-		 #matrix[2, 3] = 0
-		 #add_agent!(BoxAgent, pos = (3, 4), model)
-		 #matrix[3, 4] = 0
-		 #add_agent!(BoxAgent, pos = (4, 3), model)
-		 #matrix[4, 3] = 0
-		 #add_agent!(BoxAgent, pos = (4, 4), model)
-		 #matrix[4, 4] = 0
-		 #add_agent!(BoxAgent, pos = (5, 4), model)
-		 #matrix[5, 4] = 0
-		 #add_agent!(BoxAgent, pos = (6, 4), model)
-		 #matrix[6, 4] = 0
-		 #add_agent!(BoxAgent, pos = (7, 3), model)
-		 #matrix[7, 3] = 0
-		 #add_agent!(BoxAgent, pos = (8, 4), model)
-		 #matrix[8, 4] = 0
-		 #add_agent!(BoxAgent, pos = (7, 4), model)
-		 #matrix[7, 4] = 0
-
 		 maze = BitArray(map(x -> x > 0, matrix))
 		 model.paths = []
-		 
-         #sea agrega a los robots
-		 robot = add_agent!(RobotAgent, pos = (4, 2), model,min_x = 1, max_x = 8, x_carga = 1, who = 1)
-		 for linea in 3:40
-            for i in robot.min_x:robot.max_x
-                agente = collect(agents_in_position((i,linea),model))
-                if !isempty(agente)
-                    robot.cajasLinea = vcat(robot.cajasLinea,agente)
+
+		 cords = [[4,2,1,8],[13,2,9,16],[20,2,17,24],[28,2,25,32],[36,2,33,40]]
+
+		 for num in 1:5
+            robot = add_agent!(RobotAgent, pos = (cords[num][1],cords[num][2]), model,min_x = cords[num][3], max_x = cords[num][4], x_carga = cords[num][3], who = num)
+            for linea in 3:40
+                for i in robot.min_x:robot.max_x
+                    agente = collect(agents_in_position((i,linea),model))
+                    if !isempty(agente)
+                        robot.cajasLinea = vcat(robot.cajasLinea,agente)
+                    end
                 end
             end
-         end
-         pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
-         #model.path = pathfinder
-         push!(model.paths,pathfinder)
-         plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder)
-
-		 r2 = add_agent!(RobotAgent, pos = (13, 2), model,min_x = 9, max_x = 16, x_carga = 9, who = 2)
-		 for linea in 3:40
-            for i in r2.min_x:r2.max_x
-                agente = collect(agents_in_position((i,linea),model))
-                if !isempty(agente)
-                    r2.cajasLinea = vcat(r2.cajasLinea,agente)
-                end
-            end
-         end
-         pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
-         #model.path1 = pathfinder
-         push!(model.paths,pathfinder)
-         plan_route!(r2, (r2.cajasLinea[1].pos[1], r2.cajasLinea[1].pos[2]-1), pathfinder)
-         
-		 #for linea in 1:40
-            #for i in robot.min_x:robot.max_x
-            #    agente = collect(agents_in_position((i,linea),model))
-            #    if !isempty(agente)
-            #        robot.cajasLinea = vcat(robot.cajasLinea,agente)
-            #    end
-            #end
-		 #end
-		 #add_agent!(RobotAgent, pos = (13,2), model)
-		 #add_agent!(RobotAgent, pos = (20,2), model)
-		 #add_agent!(RobotAgent, pos = (28,2), model)
-		 #add_agent!(RobotAgent, pos = (36,2), model)
-		 #add_agent!(RobotAgent, pos = (28,2), model)
-
-		 #area de pruebas
-		 #add_agent!(BoxAgent, pos = (1, 4), model)
-		 #add_agent!(BoxAgent, pos = (2, 3), model)
-		 #add_agent!(BoxAgent, pos = (3, 4), model)
-		 #add_agent!(BoxAgent, pos = (4, 3), model)
-		 #add_agent!(BoxAgent, pos = (4, 4), model)
-		 #add_agent!(BoxAgent, pos = (5, 4), model)
-		 #add_agent!(BoxAgent, pos = (6, 4), model)
-		 #add_agent!(BoxAgent, pos = (7, 3), model)
-		 #add_agent!(BoxAgent, pos = (8, 4), model)
-
-         #se crea el espacio por el que el path hará la ruta
-		 #plan_route!(a, (4, 6), pathfinder)
+            pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
+            push!(model.paths,pathfinder)
+            plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder)
+		 end
 		 model.matrix = matrix
     return model
 end
