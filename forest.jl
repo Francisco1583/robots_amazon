@@ -15,21 +15,27 @@ end
     linea::Integer = 3
     regreso::Integer = 0
     x_carga::Integer = 1
-    reset::Integer = 0
+    #reset::Integer = 0
     cajasLinea::Vector{Any} = []
-    despliegue::Integer = 0
+    path::Vector{Any} = []
+    #despliegue::Integer = 0
     trabajando::Integer = 1
+    who::Integer = 1
 end
 #funcion bastate intuitiva por lo mismo no la explico
 function forest_step(tree::BoxAgent, model)
-	pathfinder = model.path 
-	move_along_route!(tree, model, pathfinder)
-	#end
-				
+		
 end
 
 function forest_step(robot::RobotAgent, model)
-    pathfinder = model.path 
+    #if robot.who == 1
+    #    pathfinder = model.path
+    #else
+    #    pathfinder = model.path1
+    #end
+    pathfinder = model.paths[robot.who]
+    #pathfinder = model.path
+    
     if !isempty(robot.cajasLinea)
         caja_x =robot.cajasLinea[1].pos[1]
         caja_y =robot.cajasLinea[1].pos[2]-1
@@ -41,7 +47,12 @@ function forest_step(robot::RobotAgent, model)
             model.matrix = matrix
             maze = BitArray(map(x -> x > 0, matrix))
             pathfinder = AStar(GridSpace((40,40); periodic = false, metric = :chebyshev); walkmap=maze, diagonal_movement=false)
-            model.path = pathfinder
+            #if robot.who == 1
+            #    model.path = pathfinder
+            #else
+            #    model.path1 = pathfinder
+            #end
+            model.paths[robot.who] = pathfinder 
             #eliminamos la caja recojida de la lista y del modelo (50-52)
             popcaja = robot.cajasLinea[1]
             popfirst!(robot.cajasLinea)
@@ -95,7 +106,7 @@ end
 
 function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = true, big_probability = 100)
     space = GridSpace((40,40); periodic = false, metric = :chebyshev)
-    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(:probability_of_spread => probability_of_spread,:south_wind_speed => south_wind_speed,:west_wind_speed => west_wind_speed, :big_jumps => big_jumps, :big_probability => big_probability, :path => nothing, :matrix=> nothing))
+    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(:probability_of_spread => probability_of_spread,:south_wind_speed => south_wind_speed,:west_wind_speed => west_wind_speed, :big_jumps => big_jumps, :big_probability => big_probability, :path => nothing, :matrix=> nothing,:path1 => nothing,:paths => nothing))
 		matrix = [
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
@@ -155,6 +166,7 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             add_agent!(BoxAgent, pos = pos, model)
 		 end
 
+
 		 #add_agent!(BoxAgent, pos = (1, 4), model)
 		 #matrix[1, 4] = 0
 		 #add_agent!(BoxAgent, pos = (2, 3), model)
@@ -177,12 +189,10 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
 		 #matrix[7, 4] = 0
 
 		 maze = BitArray(map(x -> x > 0, matrix))
-		 pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
-		 model.path = pathfinder
-		 model.matrix = matrix
+		 model.paths = []
 		 
          #sea agrega a los robots
-		 robot = add_agent!(RobotAgent, pos = (4, 2), model)
+		 robot = add_agent!(RobotAgent, pos = (4, 2), model,min_x = 1, max_x = 8, x_carga = 1, who = 1)
 		 for linea in 3:40
             for i in robot.min_x:robot.max_x
                 agente = collect(agents_in_position((i,linea),model))
@@ -191,7 +201,25 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
                 end
             end
          end
+         pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
+         #model.path = pathfinder
+         push!(model.paths,pathfinder)
          plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder)
+
+		 r2 = add_agent!(RobotAgent, pos = (13, 2), model,min_x = 9, max_x = 16, x_carga = 9, who = 2)
+		 for linea in 3:40
+            for i in r2.min_x:r2.max_x
+                agente = collect(agents_in_position((i,linea),model))
+                if !isempty(agente)
+                    r2.cajasLinea = vcat(r2.cajasLinea,agente)
+                end
+            end
+         end
+         pathfinder = AStar(space; walkmap=maze, diagonal_movement=false)
+         #model.path1 = pathfinder
+         push!(model.paths,pathfinder)
+         plan_route!(r2, (r2.cajasLinea[1].pos[1], r2.cajasLinea[1].pos[2]-1), pathfinder)
+         
 		 #for linea in 1:40
             #for i in robot.min_x:robot.max_x
             #    agente = collect(agents_in_position((i,linea),model))
@@ -219,5 +247,6 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
 
          #se crea el espacio por el que el path hará la ruta
 		 #plan_route!(a, (4, 6), pathfinder)
+		 model.matrix = matrix
     return model
 end
