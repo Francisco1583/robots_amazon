@@ -2,9 +2,6 @@ import { Button, ButtonGroup,SliderField } from '@aws-amplify/ui-react';
 import { useRef, useState } from 'react'
 import '@aws-amplify/ui-react/styles.css';
 
-
-
-
 function App() {
   let [location, setLocation] = useState("");
   let [gridSize, setGridSize] = useState(40);
