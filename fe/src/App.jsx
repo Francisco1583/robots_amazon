@@ -1,14 +1,9 @@
-import { Button, ButtonGroup,SliderField, CheckboxField } from '@aws-amplify/ui-react';
+import { Button, ButtonGroup,SliderField } from '@aws-amplify/ui-react';
 import { useRef, useState } from 'react'
 import '@aws-amplify/ui-react/styles.css';
 
-import Plotly from 'plotly.js/dist/plotly';
 
-Plotly.newPlot('myDiv', [{
-  y: [1,2,3,1,3],
-  mode: 'lines',
-  line: {color: '#80CAF6'}
-}]);
+
 
 function App() {
   let [location, setLocation] = useState("");
@@ -58,12 +53,6 @@ function App() {
 
   let handleStop = () => {
    clearInterval(running.current);
-
-   Plotly.newPlot('myDiv', [{
-    y: burntTrees.current,
-    mode: 'lines',
-    line: {color: '#80CAF6'}
-   }]);
   };
 
   let burning = trees.filter(t => t.status == "burning").length;
@@ -78,27 +67,11 @@ function App() {
         <Button onClick={handleStop}>Stop</Button>
       </ButtonGroup>
 
-<SliderField label="Grid size" min={10} max={40} step={10}
-    value={gridSize} onChange={setGridSize} />  
+ 
 <SliderField label="simulation speed" min={1} max={40} step={10}
     value={simSpeed} onChange={setSimSpeed} />
-<SliderField label="probability_of_spread" min={0} max={100} step={1}
-    value={probability} onChange={setProbability} />
-<SliderField label="density" min={0} max={1} step={0.1}
-    value={density} onChange={setDensity} />
-<SliderField label="south wind" min={-50} max={50} step={1}
-    value={south_wind} onChange={setSouth} />
-<SliderField label="west wind" min={-50} max={50} step={1}
-    value={west_wind} onChange={setWest} />
-<CheckboxField
-      name="big_jumps"
-      value="yes"
-      checked={checked}
-      onChange={(e) => setChecked(e.target.checked)}
-      label="on/off big jumps"
-    />
-<SliderField label="probability of jump" min={0} max={100} step={1}
-    value={jump_prob} onChange={setJpb} />
+
+
 
 
       <svg width="500" height="500" xmlns="http://www.w3.org/2000/svg" style={{backgroundColor:"black"}}>
