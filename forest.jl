@@ -22,6 +22,8 @@ end
     cajasLinea::Vector{Any} = [] # todas las cajar por recoger
     trabajando::Integer = 1
     who::Integer = 1
+    previous_pos::Tuple{Int, Int} = (0, 0)
+    rotation_direction::String = ""
 end
 
 # la caja no se mueve, por ende no hay funcion de movimiento
@@ -32,16 +34,34 @@ end
 function forest_step(robot::RobotAgent, model)
 
     pathfinder = model.paths[robot.who] # selecciona el pathfinding correspondiente al robot (who indica que pathfinding utilizar)
+    if robot.previous_pos != (0, 0) && robot.pos != robot.previous_pos
+        delta_x, delta_y = robot.pos[1] - robot.previous_pos[1], robot.pos[2] - robot.previous_pos[2]
+        if delta_x == 1 && delta_y == 0
+            robot.rotation_direction = "LEFT"
+        elseif delta_x == -1 && delta_y == 0
+            robot.rotation_direction = "RIGHT"
+        elseif delta_x == 0 && delta_y == 1
+            robot.rotation_direction = "UP"
+        elseif delta_x == 0 && delta_y == -1
+            robot.rotation_direction = "DOWN"
+        else
+            robot.rotation_direction = "DIAGONAL"
+        end
+        println("Rotation detected: $(robot.rotation_direction)")
+        robot.previous_pos = robot.pos
+    end
     
     if !isempty(robot.cajasLinea)
         caja_x =robot.cajasLinea[1].pos[1] # obtener posicion de la caja en x
         caja_y =robot.cajasLinea[1].pos[2]-1 # obtener posicion de la caja en y
         if robot.pos == (caja_x,caja_y) && !isempty(robot.cajasLinea) # si el robot esta justo arriba de la caja
             robot.regreso = 1
+            
             # actualizamos la matriz para que la casilla de la caja recojida ahora aparezca disponible (43-48)
             matrix = model.matrix
             matrix[robot.cajasLinea[1].pos[1],robot.cajasLinea[1].pos[2]] = 1
             model.matrix = matrix
+
             maze = BitArray(map(x -> x > 0, matrix))
             pathfinder = AStar(GridSpace((40,40); periodic = false, metric = :chebyshev); walkmap=maze, diagonal_movement=false)
             model.paths[robot.who] = pathfinder # se asigna el nuevo pathfinding dependiendo el indice del robot (who)
@@ -141,11 +161,11 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
-            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;																
-						 ]
+            1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
+        ]
 
-         #se crean las cajas en posiciones aleatorias (a excepcion del area de depósito y de robots)
-		 for i in 1:100
+        #se crean las cajas en posiciones aleatorias (a excepcion del area de depósito y de robots)
+		for i in 1:100
             empty = collect(empty_positions(model))
             pos = rand(empty)
             x = pos[1]
@@ -157,19 +177,24 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             end
             matrix[x,y] = 0 # 0 donde hay caja
             add_agent!(BoxAgent, pos = pos, model)
-		 end
+		end
 
-         # la matriz se transforma a bitarray
-		 maze = BitArray(map(x -> x > 0, matrix))
-		 model.paths = [] # se guardan los 5 pathfinders (linea 174)
+        # la matriz se transforma a bitarray
+        maze = BitArray(map(x -> x > 0, matrix))
+        model.paths = [] # se guardan los 5 pathfinders (linea 174)
 
-         # [coordenada en x, coordenada en y, limite izquierdo en x, limite derecho en x]
-         #         x y x1 x2
-		 cords = [[4,2,1,8],[13,2,9,16],[20,2,17,24],[28,2,25,32],[36,2,33,40]]
+        # [coordenada en x, coordenada en y, limite izquierdo en x, limite derecho en x]
+        #         x y x1 x2
+        cords = [[4,2,1,8],[13,2,9,16],[20,2,17,24],[28,2,25,32],[36,2,33,40]]
 
-         # num y who son los mismos, indice del robot y su pathfinding (linea 30)
-		 for num in 1:5 # x_carga posición inicial de la zona de descarga, who le asigna un pathfinding personal a cada robot
-            robot = add_agent!(RobotAgent, pos = (cords[num][1],cords[num][2]), model,min_x = cords[num][3], max_x = cords[num][4], x_carga = cords[num][3], who = num)
+        # num y who son los mismos, indice del robot y su pathfinding (linea 30)
+        for num in 1:1 # x_carga posición inicial de la zona de descarga, who le asigna un pathfinding personal a cada robot
+            robot = add_agent!(RobotAgent, pos = (cords[num][1],cords[num][2]), model,
+                min_x = cords[num][3], 
+                max_x = cords[num][4], 
+                x_carga = cords[num][3], who = num
+            )
+            robot.previous_pos = robot.pos
             for linea in 3:40 # zona de cajas
                 for i in robot.min_x:robot.max_x # robot en su carril
                     agente = collect(agents_in_position((i,linea),model))
@@ -181,7 +206,8 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
             pathfinder = AStar(space; walkmap=maze, diagonal_movement=false) # generación de pathfinding
             push!(model.paths,pathfinder) # agrega un pathfinding por robot
             plan_route!(robot, (robot.cajasLinea[1].pos[1], robot.cajasLinea[1].pos[2]-1), pathfinder) # genera la nueva ruta de la siguiente caja
-		 end
-		 model.matrix = matrix # guarda la nueva matriz en el modelo
+        end
+		model.matrix = matrix # guarda la nueva matriz en el modelo
+
     return model
 end
