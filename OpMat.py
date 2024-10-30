@@ -49,14 +49,3 @@ class OpMat:
         
     def imprimir_init(self):
         print(self.init_matrix)
-
-
-#matriz = OpMat()
-#matriz.rotation(90)
-#matriz.pop()
-#matriz.push()
-#matriz.scale(20,20)
-#puntos = matriz.mult_Points([[0.0,1.0,1.0],[-1.0,-1.0,1.0],[1.0,-1.0,1.0]])
-#puntos = matriz.mult_Points([[-1.0,1.0,1.0],[1.0,1.0,1.0],[1.0,-1.0,1.0],[-1.0,-1.0,1.0]])
-#matriz.pop()
-#print(puntos)

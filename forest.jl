@@ -26,6 +26,10 @@ end
     rotation_direction::String = ""
     timer::Integer = 0
     list_orientation::Vector{Any} = ["UP","LEFT","DOWN","RIGHT"]
+    popcaja::Union{BoxAgent, Nothing} = nothing
+    fullcaja::Union{BoxAgent, Nothing} = nothing
+    nuevacaja::Bool = false
+    
 end
 
 # la caja no se mueve, por ende no hay funcion de movimiento
@@ -41,20 +45,26 @@ function forest_step(robot::RobotAgent, model)
 
     
     if robot.timer == 0
+        if robot.popcaja != nothing
+            remove_agent!(robot.popcaja, model)
+            robot.popcaja = nothing
+        end
+        if robot.fullcaja != nothing
+            robot.fullcaja.status = burning
+            robot.fullcaja = nothing
+        end
+        if robot.nuevacaja == true 
+            add_agent!(BoxAgent, pos = (robot.x_carga,1), model)
+            robot.nuevacaja = false
+        end
         if robot.previous_pos != (0, 0) && robot.pos != robot.previous_pos
             delta_x, delta_y = robot.pos[1] - robot.previous_pos[1], robot.pos[2] - robot.previous_pos[2]
             if delta_x == 1 && delta_y == 0
                 rotation_direction = 4
-                #deleteat!(list_orientation,1)
-                #list_orientation = vcat(list_orientation,[hd])
-                #robot.list_orientation = list_orientation
             elseif delta_x == -1 && delta_y == 0
                 rotation_direction = 2
             elseif delta_x == 0 && delta_y == 1
                 rotation_direction = 3
-                #primera_parte = list_orientation[1:2]
-                #segunda_parte = list_orientation[3:end]
-                #robot.list_orientation = vcat(segunda_parte,primera_parte)
             elseif delta_x == 0 && delta_y == -1
                 rotation_direction = 1
             else
@@ -63,27 +73,21 @@ function forest_step(robot::RobotAgent, model)
             robot.previous_pos = robot.pos
     
             robot.rotation_direction = (robot.list_orientation)[rotation_direction]
-            print((robot.list_orientation)[rotation_direction])
-            print(" | ")
             if list_orientation[rotation_direction] == "RIGHT"
-                robot.timer = 25
+                robot.timer = 13
                 deleteat!(list_orientation,1)
                 list_orientation = vcat(list_orientation,[hd])
                 robot.list_orientation = list_orientation
             elseif (list_orientation)[rotation_direction] == "LEFT"
-                robot.timer = 25
+                robot.timer = 13
                 deleteat!(list_orientation,4)
                 robot.list_orientation = vcat([tl],list_orientation)
             elseif (list_orientation)[rotation_direction] == "DOWN"
-                robot.timer = 45
+                robot.timer = 23
                 primera_parte = list_orientation[1:2]
                 segunda_parte = list_orientation[3:end]
                 robot.list_orientation = vcat(segunda_parte,primera_parte)
             end
-        
-            #print(robot.rotation_direction)
-            #print(robot.list_orientation)
-            print((robot.list_orientation)[rotation_direction])
         end
         if !isempty(robot.cajasLinea)
             caja_x =robot.cajasLinea[1].pos[1] # obtener posicion de la caja en x
@@ -99,26 +103,22 @@ function forest_step(robot::RobotAgent, model)
                 maze = BitArray(map(x -> x > 0, matrix))
                 pathfinder = AStar(GridSpace((40,40); periodic = false, metric = :chebyshev); walkmap=maze, diagonal_movement=false)
                 model.paths[robot.who] = pathfinder # se asigna el nuevo pathfinding dependiendo el indice del robot (who)
-                #eliminamos la caja recojida de la lista y del modelo (50-52)
-                popcaja = robot.cajasLinea[1] # se guarda para eliminar posterioemtne del modelo
+                #eliminamos la caja recojida de la lista (50-52)
+                robot.popcaja = robot.cajasLinea[1] # se guarda para eliminar posterioemtne del modelo
                 popfirst!(robot.cajasLinea) # se elimina del arreglo cajasLinea
-                remove_agent!(popcaja, model) # se elimina del modelo
                 plan_route!(robot, (robot.x_carga,2), pathfinder) # regreso a la zona de descarga
                 move_along_route!(robot, model, pathfinder) # se comeinza a mover a la siguiente caja
             elseif robot.pos == (robot.x_carga, 2) && robot.regreso == 1 && !isempty(robot.cajasLinea) # cuando esta en el deposito y va a la siguiente caja
                 robot.regreso = 0 # 0 igual a ida, para evitar dejar cajas cuando no tiene, pero pasa por la zona de descarga
                 deposito = collect(agents_in_position((robot.x_carga,1),model)) # caja correspondiente al area de carga actual
                 if !isempty(deposito)
-                    print("entra a sumar")
                     deposito[1].num = deposito[1].num + 1 # se van sumando cuantas cajas se han depositado
                     if deposito[1].num == 5
-                        
-                        deposito[1].status = burning # cambia el estado a lleno
+                        robot.fullcaja = deposito[1] 
                         robot.x_carga = robot.x_carga + 1 # se va a la siguiente coordenada del deposito (una unidad a la derecha)
                     end
                 else
-                    print("agregar caja") # agregar una caja a la zona de descarga correspondiente (linea 53)
-                    add_agent!(BoxAgent, pos = (robot.x_carga,1), model)
+                    robot.nuevacaja = true
                 end
                 plan_route!(robot, (robot.cajasLinea[1].pos[1],robot.cajasLinea[1].pos[2]-1), pathfinder) # se va por la siguiente caja, sin importar si se esta agregando una caja a un deposito viejo o nuevo
                 move_along_route!(robot, model, pathfinder) # avanza un paso en la dirección correspondiente
@@ -127,22 +127,19 @@ function forest_step(robot::RobotAgent, model)
             end
         else
             if robot.trabajando == 0
-                print("robot ha terminado de acomodar las cajas en su respectivo carril")
+                #print("robot ha terminado de acomodar las cajas en su respectivo carril")
                 # se agrega la ultima caja antes de terminar de trabajar
             elseif robot.pos == (robot.x_carga, 2)
                 robot.trabajando = 0
                 deposito = collect(agents_in_position((robot.x_carga,1),model)) # 
                 if !isempty(deposito)
-                    print("entra a sumar")
                     deposito[1].num = deposito[1].num + 1 # se agrega 1 al numero de cajas acumuladas
                     if deposito[1].num == 5
-                        
-                        deposito[1].status = burning # pila de cajas llena, burning = llena
+                        robot.fullcaja = deposito[1] 
                         robot.x_carga = robot.x_carga + 1 # se mueve una posicion a la derecha
                     end
                 else
-                    print("agregar caja")
-                    add_agent!(BoxAgent, pos = (robot.x_carga,1), model) # se agrega la siguiente pila de cajas
+                    robot.nuevacaja = true
                 end
             else
                 move_along_route!(robot, model, pathfinder)
@@ -152,8 +149,7 @@ function forest_step(robot::RobotAgent, model)
     else 
         robot.timer = robot.timer - 1
         robot.rotation_direction = ""
-        print(robot.timer)
-    end   
+    end 
 end
 
 # se inicializa el modelo

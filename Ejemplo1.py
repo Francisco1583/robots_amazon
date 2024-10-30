@@ -17,7 +17,6 @@ r = requests.post(URL_BASE+ "/simulations", allow_redirects=False)
 datos = r.json()
 robots = datos["robots"]
 trees = datos["trees"]
-print(datos)
 LOCATION = datos["Location"]
 
 opera = OpMat()
@@ -70,12 +69,6 @@ def cuadrado():
     for robot in robots:
         tupone = robot["previous_pos"][0]
         tuptwo = robot["previous_pos"][1]
-        if robot["regreso"] == 1:
-            ts[robot["who"]-1].setColor(0,0,1)
-            #t1.setColor(0,0,1)
-        else:
-            ts[robot["who"]-1].setColor(0,1,0)
-            #t1.setColor(0,1,0)
         opera.push()
         if robot["rotation_direction"] == "LEFT":
             if ts[robot["who"]-1].mode == 0:
@@ -103,8 +96,15 @@ def cuadrado():
         #t1.robot()
         #t1.cuadrado((robot["pos"][0]* 40)-900,-((robot["pos"][1] * 40)-900),15,15)
         opera.pop()
+        if robot["timer"] == 0:
+            if robot["regreso"] == 1:
+                ts[robot["who"]-1].setCarga(1)
+                ts[robot["who"]-1].setColor(0,0,1)
+            else:
+                ts[robot["who"]-1].setCarga(0)
+                ts[robot["who"]-1].setColor(0,1,0)
     for tree in trees:   
-        if tree["num"] < 5:
+        if tree["status"] != "burning":
             t1.setColor(0,1,0)
         else:
             t1.setColor(1,0,0)

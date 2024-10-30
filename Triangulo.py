@@ -13,12 +13,12 @@ class Triangulo:
         self.pointsR =[[-1.0,2.0,1.0],[1.0,2.0,1.0],[1,-2,1],[-1,-2,1]]
         self.pointsC =[[-1.0,1.0,1.0],[1.0,1.0,1.0],[1,-1,1],[-1,-1,1]]
         self.opera = model_m
-        self.r = 1.0
-        self.g = 0.0
+        self.r = 0.0
+        self.g = 1.0
         self.b = 0.0
         self.deg = 0
         self.Robot_orientation = 90
-        self.delt_deg = 5
+        self.delt_deg = 10
         self.girol = 0
         self.giror = 0
         self.pos_x = 0
@@ -33,6 +33,10 @@ class Triangulo:
         self.delt_trans = 5
         self.transUp = 0
         self.transDown = 0
+        self.carga = 0
+
+    def setCarga(self,carga):
+        self.carga = carga
         
     def setMode(self):
         self.mode = 1
@@ -144,7 +148,6 @@ class Triangulo:
         dy = self.delt_trans * math.sin(rad)
         self.pos_x = self.pos_x + dx
         self.pos_y = self.pos_y + dy
-        #self.pos_y = self.pos_y + self.delt_trans
 
     def down(self):
         rad = math.radians(self.Robot_orientation)  
@@ -152,7 +155,6 @@ class Triangulo:
         dy = self.delt_trans * math.sin(rad)
         self.pos_x = self.pos_x - dx
         self.pos_y = self.pos_y - dy
-        #self.pos_y = self.pos_y - self.delt_trans
 
     def cons_up(self):
         if self.transUp != 0:
@@ -188,7 +190,6 @@ class Triangulo:
             self.girol = self.girol - self.delt_deg
             if self.girol == 0:
                 self.mode = 0
-            print(self.deg)
 
 
     def right(self):
@@ -199,7 +200,6 @@ class Triangulo:
             self.giror = self.giror + self.delt_deg
             if self.giror == 0:
                 self.mode = 0
-            print(self.deg)
 
     def descarga(self):
         if self.ac_boxDes != 0 and self.girol == 0:
@@ -207,7 +207,6 @@ class Triangulo:
             self.ac_boxDes = self.ac_boxDes + self.delt_trans
             if self.ac_boxDes == 0:
                 self.mode = 0
-            print(self.ac_boxDes)
             
     def carga(self):
         if self.ac_boxCarg!= 0 and self.girol == 0:
@@ -215,7 +214,6 @@ class Triangulo:
             self.ac_boxCarg = self.ac_boxCarg - self.delt_trans
             if self.ac_boxDes == 0:
                 self.mode = 0
-            print(self.ac_boxCarg)
         
 
     def robot(self):
@@ -224,11 +222,12 @@ class Triangulo:
         self.opera.translate(self.pos_x,self.pos_y)
         self.opera.rotation(self.deg)
         #caja
-        self.opera.push()
-        self.opera.translate(0,self.trans_box)
-        self.opera.scale(round((self.scl)/1.53),round((self.scl)/1.53))
-        self.render(self.pointsC.copy())
-        self.opera.pop()
+        if self.carga == 1:
+            self.opera.push()
+            self.opera.translate(0,self.trans_box)
+            self.opera.scale(round((self.scl)/1.53),round((self.scl)/1.53))
+            self.render(self.pointsC.copy())
+            self.opera.pop()
         #rueda
         self.opera.push()
         self.opera.translate(-round((self.scl)/0.769),round((self.scl)/0.7142))
