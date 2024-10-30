@@ -43,20 +43,24 @@ function forest_step(robot::RobotAgent, model)
     hd = list_orientation[1]
     pathfinder = model.paths[robot.who] # selecciona el pathfinding correspondiente al robot (who indica que pathfinding utilizar)
 
-    
+    #si el timer es diferente de 0 quiere decir que del lado del julia se esta haciendo una rotación
     if robot.timer == 0
+        #si el atribuja de popcaja es diferente de nada es que hay un agente tipo caja guardado, eliminalo del modelo
         if robot.popcaja != nothing
             remove_agent!(robot.popcaja, model)
             robot.popcaja = nothing
         end
+        #si el atributo de fullcaja es diferente de nada es que hay un agente de tipo caja, cambia su estado a burning (burning se usa para indicar que está llena la pila)
         if robot.fullcaja != nothing
             robot.fullcaja.status = burning
             robot.fullcaja = nothing
         end
+        #misma logica para los anteriores pero para agregar una nueva caja que será la nueva area para descarga de los robots
         if robot.nuevacaja == true 
             add_agent!(BoxAgent, pos = (robot.x_carga,1), model)
             robot.nuevacaja = false
         end
+        #con la posición previa y la actual se determina a que dirección se movió el robot (64-76)
         if robot.previous_pos != (0, 0) && robot.pos != robot.previous_pos
             delta_x, delta_y = robot.pos[1] - robot.previous_pos[1], robot.pos[2] - robot.previous_pos[2]
             if delta_x == 1 && delta_y == 0
@@ -70,9 +74,11 @@ function forest_step(robot::RobotAgent, model)
             else
                 rotation_direction = "DIAGONAL"
             end
+            #ahora la posición previa será la actual para la siguiente iteración
             robot.previous_pos = robot.pos
-    
+            #aquí se asigna en que posición se movió el robot pero dependiendo de su orientación
             robot.rotation_direction = (robot.list_orientation)[rotation_direction]
+            #aquí se reordenan los elementos de la lista list_orientation para mantener la orientación del robot actualizada y saber a que posición se movió con respecto a su orientación
             if list_orientation[rotation_direction] == "RIGHT"
                 robot.timer = 13
                 deleteat!(list_orientation,1)

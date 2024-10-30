@@ -75,7 +75,7 @@ class Triangulo:
         self.r = r
         self.g = g
         self.b = b
-
+    #algoritmo que dibuja una linea dadas dos coordenadas
     def bresenhan(self,x1,y1,x0,y0):
         if abs(y1-y0) > abs(x1-x0):
             dx = y1 - y0
@@ -133,7 +133,7 @@ class Triangulo:
                 glVertex2f(x,y)
                 glEnd()
                 glLineWidth(1.0)
-
+    #actualiza las coordenadas de los vertices de un arreglo dado
     def render(self,points):
         triangule_cords = np.array(points)
         new_triangule_cords = self.opera.mult_Points(triangule_cords)
@@ -141,21 +141,21 @@ class Triangulo:
         self.bresenhan(round(new_triangule_cords[1][0]),round(new_triangule_cords[1][1]),round(new_triangule_cords[2][0]),round(new_triangule_cords[2][1]))
         self.bresenhan(round(new_triangule_cords[2][0]),round(new_triangule_cords[2][1]),round(new_triangule_cords[3][0]),round(new_triangule_cords[3][1]))
         self.bresenhan(round(new_triangule_cords[3][0]),round(new_triangule_cords[3][1]),round(new_triangule_cords[0][0]),round(new_triangule_cords[0][1]))
-
+    #función que traslada una unidad al robot hacia arriba dependiendo de su orientación
     def up(self):
         rad = math.radians(self.Robot_orientation)  
         dx = self.delt_trans * math.cos(rad) 
         dy = self.delt_trans * math.sin(rad)
         self.pos_x = self.pos_x + dx
         self.pos_y = self.pos_y + dy
-
+    #función que traslada una unidad al robot hacia abajo dependiendo de su orientación
     def down(self):
         rad = math.radians(self.Robot_orientation)  
         dx = self.delt_trans * math.cos(rad) 
         dy = self.delt_trans * math.sin(rad)
         self.pos_x = self.pos_x - dx
         self.pos_y = self.pos_y - dy
-
+    #función que traslada una distancia constante al robot hacia arriba dependiendo de su orientación
     def cons_up(self):
         if self.transUp != 0:
             self.mode = 1
@@ -167,7 +167,7 @@ class Triangulo:
             self.transUp = self.transUp - self.delt_trans
             if self.transUp == 0:
                 self.mode = 0
-                
+    #función que traslada una distancia constante al robot hacia abajo dependiendo de su orientación
     def cons_down(self):
         if self.transDown != 0:
             self.mode = 1
@@ -181,7 +181,7 @@ class Triangulo:
                 self.mode = 0
             
                 
-
+    #función que rota un grado a la izquierda al robot (solo se usó para pruebas de teclado)
     def left(self):
         if self.girol != 0:
             self.mode = 1
@@ -191,7 +191,7 @@ class Triangulo:
             if self.girol == 0:
                 self.mode = 0
 
-
+    #función que rota un grado a la derecha al robot (solo se usó para pruebas de teclado)
     def right(self):
         if self.giror != 0:
             self.mode = 1
@@ -200,14 +200,14 @@ class Triangulo:
             self.giror = self.giror + self.delt_deg
             if self.giror == 0:
                 self.mode = 0
-
+    #función que hace animación de descargar caja (no se usó porque no fue necesario)
     def descarga(self):
         if self.ac_boxDes != 0 and self.girol == 0:
             self.trans_box = (self.trans_box - self.delt_trans)
             self.ac_boxDes = self.ac_boxDes + self.delt_trans
             if self.ac_boxDes == 0:
                 self.mode = 0
-            
+    #función que hace animación de carga (no se usó porque no fue necesario)
     def carga(self):
         if self.ac_boxCarg!= 0 and self.girol == 0:
             self.trans_box = (self.trans_box + self.delt_trans)
@@ -215,7 +215,7 @@ class Triangulo:
             if self.ac_boxDes == 0:
                 self.mode = 0
         
-
+    #función que dibuja el robot
     def robot(self):
         self.opera.push()
         #self.opera.rotation(180)
