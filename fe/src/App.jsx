@@ -23,7 +23,7 @@ function App() {
     fetch("http://localhost:8000/simulations", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked, jp:jump_prob})
+      //body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked, jp:jump_prob})
     }).then(resp => resp.json())
     .then(data => {
       setLocation(data["Location"]);
