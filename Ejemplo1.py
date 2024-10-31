@@ -23,7 +23,7 @@ opera = OpMat()
 ts = []
 for i in range (5):
     ts.append(Triangulo(opera))
-    ts[i].setScl(10)
+    ts[i].setScl(10) 
 t1 = Triangulo(opera)
 t1.setScl(10)
 #t2 = Triangulo(opera)

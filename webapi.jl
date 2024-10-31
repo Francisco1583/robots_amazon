@@ -6,18 +6,10 @@ instances = Dict()
 
 route("/simulations", method = POST) do
     payload = jsonpayload()
-    #x = payload["dim"][1]
-    #y = payload["dim"][2]
-#
-    #probability = payload["prob"]
-    #den = payload["den"]
-    #sw = payload["sw"]
-    #wew = payload["wew"]
-    #bigj = payload["bigj"]
-    #jp = payload["jp"]
-#
-    #model = forest_fire(density = den, griddims=(x,y),probability_of_spread = probability, south_wind_speed = sw, west_wind_speed = wew, big_jumps = bigj,big_probability = jp)
-    model = forest_fire()
+
+    den = payload["den"]
+    model = forest_fire(density = den)
+    #model = forest_fire()
     id = string(uuid1())
     instances[id] = model
 
@@ -40,6 +32,10 @@ route("/simulations/:id") do
     run!(model, 1)
     trees = []
     robots = []
+
+    simulation_done = all([robot.trabajando == 0 for robot in allagents(model) if robot isa RobotAgent])
+
+
     for tree in allagents(model)
         #push!(trees, tree)
         if tree isa BoxAgent
@@ -49,7 +45,7 @@ route("/simulations/:id") do
         end
     end
     
-    json(Dict(:msg => "Adios", "trees" => trees, "robots" => robots))
+    json(Dict(:msg => "Adios", "trees" => trees, "robots" => robots, "simulation_done" => simulation_done))
 end
 
 Genie.config.run_as_server = true

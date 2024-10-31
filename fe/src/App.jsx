@@ -10,7 +10,7 @@ function App() {
   //c
   let [robots, setRobots] = useState([]);
   let [probability,setProbability] = useState(20)
-  let [density,setDensity] = useState(0.5)
+  let [density,setDensity] = useState(20)
   let [south_wind,setSouth] = useState(20)
   let [west_wind,setWest] = useState(20)
   let [jump_prob,setJpb] = useState(100)
@@ -19,11 +19,28 @@ function App() {
   const burntTrees = useRef(null);
   const running = useRef(null);
 
+  // const [startTime, setStartTime] = useState(null);
+  const [simulationDuration, setSimulationDuration] = useState(null);
+  const [averageMovements, setAverageMovements] = useState(null);
+  const [stdDeviationMovements, setStdDeviationMovements] = useState(null);
+  if(simulationDuration){ 
+    console.log(simulationDuration)
+  }
+
+  if(averageMovements) {
+    console.log(averageMovements)
+  }
+
+  if(stdDeviationMovements) {
+    console.log(stdDeviationMovements)
+  }
+
+
   let setup = () => {
     fetch("http://localhost:8000/simulations", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      //body: JSON.stringify({ dim: [gridSize, gridSize],prob:probability, den: density, sw: south_wind, wew: west_wind, bigj: checked, jp:jump_prob})
+      body: JSON.stringify({den: density})
     }).then(resp => resp.json())
     .then(data => {
       setLocation(data["Location"]);
@@ -35,17 +52,35 @@ function App() {
 
 
   let handleStart = () => {
-  burntTrees.current = [];
-  running.current = setInterval(() => {
+    const startTime = Date.now()  // Start the timer
+    setSimulationDuration(null);
+    burntTrees.current = [];
+    running.current = setInterval(() => {
     fetch("http://localhost:8000" + location)
     .then(res => res.json())
     .then(data => {
+      // console.log(data)
+      if (data.simulation_done) {
+        clearInterval(running.current); // Stop interval first
+        handleStop();
+        const endTime = Date.now();
+        setSimulationDuration((endTime - startTime) / 1000);  // Duration in seconds
+        const movements = data.robots.map(robot => robot.m_count);
+        const totalMovements = data.robots.reduce((acc, robot) => acc + robot.m_count, 0);
+        const average = totalMovements / data.robots.length;
+        setAverageMovements(average);
+        const variance = movements.reduce((acc, count) => acc + Math.pow(count - average, 2), 0) / movements.length;
+        const stdDev = Math.sqrt(variance);
+        setStdDeviationMovements(stdDev);
+      }
       let burnt = data["trees"].filter(t => t.status == "burnt").length / data["trees"].length;
       burntTrees.current.push(burnt);
       setTrees(data["trees"]);
       setRobots(data["robots"]);
+
+      
     });
-    }, 1000/simSpeed );
+  }, 1000/simSpeed );
 };
 
   let handleStop = () => {
@@ -67,6 +102,8 @@ function App() {
  
 <SliderField label="simulation speed" min={1} max={40} step={10}
     value={simSpeed} onChange={setSimSpeed} />
+<SliderField label="simulation speed" min={20} max={100} step={20}
+    value={density} onChange={setDensity} />
 
 
 

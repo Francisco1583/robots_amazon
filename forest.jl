@@ -29,7 +29,7 @@ end
     popcaja::Union{BoxAgent, Nothing} = nothing
     fullcaja::Union{BoxAgent, Nothing} = nothing
     nuevacaja::Bool = false
-    
+    m_count::Integer = 0
 end
 
 # la caja no se mueve, por ende no hay funcion de movimiento
@@ -62,6 +62,7 @@ function forest_step(robot::RobotAgent, model)
         end
         #con la posición previa y la actual se determina a que dirección se movió el robot (64-76)
         if robot.previous_pos != (0, 0) && robot.pos != robot.previous_pos
+            robot.m_count += 1
             delta_x, delta_y = robot.pos[1] - robot.previous_pos[1], robot.pos[2] - robot.previous_pos[2]
             if delta_x == 1 && delta_y == 0
                 rotation_direction = 4
@@ -133,6 +134,10 @@ function forest_step(robot::RobotAgent, model)
             end
         else
             if robot.trabajando == 0
+                # remaining_robots = [r for r in allagents(model) if r isa RobotAgent && r.trabajando == 1]
+                # if isempty(remaining_robots)
+                #     model.properties[:simulation_done] = true  # Set simulation_done to true
+                # end
                 #print("robot ha terminado de acomodar las cajas en su respectivo carril")
                 # se agrega la ultima caja antes de terminar de trabajar
             elseif robot.pos == (robot.x_carga, 2)
@@ -159,9 +164,17 @@ function forest_step(robot::RobotAgent, model)
 end
 
 # se inicializa el modelo
-function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = true, big_probability = 100)
+function forest_fire(; density = 100, griddims = (50, 50), probability_of_spread = 50, south_wind_speed = 0, west_wind_speed = 0,big_jumps = true, big_probability = 100)
     space = GridSpace((40,40); periodic = false, metric = :chebyshev)
-    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(:probability_of_spread => probability_of_spread,:south_wind_speed => south_wind_speed,:west_wind_speed => west_wind_speed, :big_jumps => big_jumps, :big_probability => big_probability, :path => nothing, :matrix=> nothing,:path1 => nothing,:paths => nothing))
+    model = StandardABM(Union{RobotAgent,BoxAgent}, space; agent_step! = forest_step, scheduler = Schedulers.Randomly(),properties = Dict{Symbol, Any}(
+        :probability_of_spread => probability_of_spread,
+        :south_wind_speed => south_wind_speed,
+        :west_wind_speed => west_wind_speed, 
+        :big_jumps => big_jumps, :big_probability => big_probability, 
+        :path => nothing, :matrix=> nothing,
+        :path1 => nothing,
+        :paths => nothing
+    ))
 		matrix = [
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
             1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
@@ -206,7 +219,7 @@ function forest_fire(; density = 0.45, griddims = (50, 50), probability_of_sprea
         ]
 
         #se crean las cajas en posiciones aleatorias (a excepcion del area de depósito y de robots)
-		for i in 1:100
+		for i in 1:density
             empty = collect(empty_positions(model))
             pos = rand(empty)
             x = pos[1]
