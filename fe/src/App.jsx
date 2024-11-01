@@ -24,15 +24,15 @@ function App() {
   const [averageMovements, setAverageMovements] = useState(null);
   const [stdDeviationMovements, setStdDeviationMovements] = useState(null);
   if(simulationDuration){ 
-    console.log(simulationDuration)
+    console.log("duration seconds", simulationDuration)
   }
 
   if(averageMovements) {
-    console.log(averageMovements)
+    console.log("average movements", averageMovements)
   }
 
   if(stdDeviationMovements) {
-    console.log(stdDeviationMovements)
+    console.log("standard deviation", stdDeviationMovements)
   }
 
 
@@ -102,7 +102,7 @@ function App() {
  
 <SliderField label="simulation speed" min={1} max={40} step={10}
     value={simSpeed} onChange={setSimSpeed} />
-<SliderField label="simulation speed" min={20} max={100} step={20}
+<SliderField label="Box Density" min={20} max={100} step={20}
     value={density} onChange={setDensity} />
 
 
