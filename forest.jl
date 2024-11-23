@@ -134,12 +134,6 @@ function forest_step(robot::RobotAgent, model)
             end
         else
             if robot.trabajando == 0
-                # remaining_robots = [r for r in allagents(model) if r isa RobotAgent && r.trabajando == 1]
-                # if isempty(remaining_robots)
-                #     model.properties[:simulation_done] = true  # Set simulation_done to true
-                # end
-                #print("robot ha terminado de acomodar las cajas en su respectivo carril")
-                # se agrega la ultima caja antes de terminar de trabajar
             elseif robot.pos == (robot.x_carga, 2)
                 robot.trabajando = 0
                 deposito = collect(agents_in_position((robot.x_carga,1),model)) # 
